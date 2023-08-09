@@ -1,7 +1,7 @@
 # redlight
 
 <p align="left">
-  <img src="https://code.glowers.club/PC-Admin/redlight/logo/redlight_logo.jpg" width="480" alt="redlight logo">
+  <img src="https://code.glowers.club/PC-Admin/redlight/raw/branch/main/logo/redlight_logo.jpg" width="480" alt="redlight logo">
 </p>
 
 _"The red light means stop!"_
