@@ -4,7 +4,7 @@
   <img src="https://code.glowers.club/PC-Admin/redlight/raw/branch/main/logo/redlight_logo.jpg" width="480" alt="redlight logo">
 </p>
 
-_"The red light means stop!"_
+_"The red light means STOP!"_
 
 An advanced abuse management tool. It's a Synapse module that allows server owners to either run a "redlight server", or to act as a "redlight client" to prevent their own users from accessing abusive rooms. It's designed to block child sexual abuse material (CSAM) and other abusive content on the Matrix network. 
 
@@ -23,7 +23,9 @@ The goal of this tool is to simply block this content as efficiently as possible
 
 ## How it Works
 
-...
+"Redlight servers" will be trusted homeservers that are modified, they'll cache rdlist in memory while providing an API interface to "Redlight clients". Redlight servers will pick their own "content tags" that they are filtering, which by extension will allow clients to pick a level of filtering that suits them.
+
+Redlight clients will be untrusted homeservers that are whitelisted by their desired Redlight server. When a user on a client homeserver attempts to join a room, the hash of the room_id will be sent to the redlight server, which will confirm or deny if the room is abusive, the client then denies the user entry to that room if it is flagged.
 
 For a more detailed description of how it will work please consult the [Technical Specification](./technical_spec.md).
 
