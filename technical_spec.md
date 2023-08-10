@@ -10,7 +10,7 @@ Redlight List - A comprehensive list of abusive rooms on the Matrix network, abu
 
 Tags - Content tags that describe the type of abusive material found in a room, for example 'csam', 'lolicon' or 'terrorism'.
 
-Redlight Server - Will be trusted homeservers that are modified, they'll cache rdlist in memory while providing an API interface to "Redlight clients". Redlight servers will pick their own "content tags" that they are filtering, which by extension will allow clients to pick a level of filtering that suits them.
+Redlight Server - Will be trusted homeservers that are modified, they'll cache the Redlight list in memory while providing an API interface to "Redlight clients". Redlight servers will pick their own "content tags" that they are filtering, which by extension will allow clients to pick a level of filtering that suits them.
 
 Redlight Client - Will be untrusted homeservers that are whitelisted by their desired Redlight server. When a user on a client homeserver attempts to join a room, the hash of the room_id will be sent to the redlight server, which will confirm or deny if the room is abusive, the client then denies the user entry to that room if it is flagged.
 
@@ -39,10 +39,10 @@ This creates a chain of trust where each party using this system must be account
 
 The following methods will be used to secure the redlight list:
 
-    Avoid writing the redlight list to disk, redlight servers will simply pull the latest copy and store it in memory only.
-    Whitelisting clients, redlight servers will only serve approved clients.
-    Ratelimiting the amount of requests, if a client is requesting too many rooms in a specified timeframe their access will be automatically cut-off, forcing them to ask their redlight server to re-enable them.
-    Ratelimiting the amount of hits, if a client is finding too many abusive rooms in a specified timeframe their access will be automatically cut-off, forcing them to ask their redlight server to re-enable them.
+- Avoid writing the redlight list to disk, redlight servers will simply pull the latest copy and store it in memory only.
+- Whitelisting clients, redlight servers will only serve approved clients.
+- Ratelimiting the amount of requests, if a client is requesting too many rooms in a specified timeframe their access will be automatically cut-off, forcing them to ask their redlight server to re-enable them.
+- Ratelimiting the amount of hits, if a client is finding too many abusive rooms in a specified timeframe their access will be automatically cut-off, forcing them to ask their redlight server to re-enable them.
 
 
 # Other Design Goals
@@ -62,7 +62,7 @@ All documented endpoints require a bearer token supplied in the `Authorization` 
 
 ### **PUT** `/_matrix/loj/v1/abuse_lookup`
 
-The `abuse_lookup` endpoint returns if the supplied `room_id` is reported to contain a filtered tag in rdlist. The endpoint will
+The `abuse_lookup` endpoint returns if the supplied `room_id` is reported to contain a filtered tag in Redlight List. The endpoint will
 return either `200 OK` to signify a match or `204 No Content` to signify no match.
 
 - `room_id_hash:` String. A valid Room ID that has been hashed twice with sha256

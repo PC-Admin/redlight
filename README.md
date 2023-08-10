@@ -18,12 +18,12 @@ The goal of this tool is to simply block this content as efficiently as possible
     Easy, setup for homeserver owners via Synapse Module
     Private, hashing is used to prevent redlight clients from sharing room_ids with redlight servers
     Decentralised, many people can run redlight servers with their own blocking policies, redlight clients are free to pick a provider
-    Safe, access restrictions and ratelimiting are used to guard the content of rdlist
+    Safe, access restrictions and ratelimiting are used to guard the content of Redlight list
 
 
 ## How it Works
 
-"Redlight servers" will be trusted homeservers that are modified, they'll cache rdlist in memory while providing an API interface to "Redlight clients". Redlight servers will pick their own "content tags" that they are filtering, which by extension will allow clients to pick a level of filtering that suits them.
+"Redlight servers" will be trusted homeservers that are modified, they'll cache Redlight list in memory while providing an API interface to "Redlight clients". Redlight servers will pick their own "content tags" that they are filtering, which by extension will allow clients to pick a level of filtering that suits them.
 
 Redlight clients will be untrusted homeservers that are whitelisted by their desired Redlight server. When a user on a client homeserver attempts to join a room, the hash of the room_id will be sent to the redlight server, which will confirm or deny if the room is abusive, the client then denies the user entry to that room if it is flagged.
 
