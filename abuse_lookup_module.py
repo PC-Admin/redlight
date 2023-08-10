@@ -3,6 +3,8 @@ from synapse.module_api import ModuleApi
 from twisted.web.http import OK, NO_CONTENT
 import json
 from twisted.web import http
+from twisted.internet import defer
+from twisted.internet.defer import inlineCallbacks
 
 logger = logging.getLogger(__name__)
 
@@ -19,45 +21,66 @@ class AbuseLookupModule:
         logger.info("AbuseLookupModule initialized.")
 
 class AbuseLookupResource:
+
+    isLeaf = True
+
     def __init__(self, module):
         self._module = module
 
-    async def on_PUT(self, request):
-        # Extract body from the request
-        body = await request.content.read()
-        content = body.decode("utf-8")
-        
-        # Log the request to Synapse's log
-        logger.info(f"Received abuse lookup request: {content}")
+    def render(self, request):
+        method = request.method.decode('ascii')
+        handler = getattr(self, f"on_{method}", None)
 
-        # Extract room_id from the content (assuming the content is JSON and valid)
+        if handler:
+            result = handler(request)
+            return result if isinstance(result, bytes) else self.method_not_allowed(request)
+        else:
+            return self.method_not_allowed(request)
+
+    @inlineCallbacks
+    def on_PUT(self, request):
         try:
+            # Extract body from the request
+            body = yield request.content.read()
+            content = body.decode("utf-8")
+            
+            # Log the request to Synapse's log
+            logger.info(f"Received abuse lookup request: {content}")
+
+            # Extract room_id from the content
             data = json.loads(content)
             room_id = data["room_id"]
             
             # TODO: Check the room_id against your list/database
-            # For now, we'll just simulate it
             is_abuse = room_id == "!OEedGOAXDBahPyWMSQ:example.com"
 
             if is_abuse:
-                return (http.OK, json.dumps({
+                request.setResponseCode(http.OK)
+                defer.returnValue(json.dumps({
                     "error": None,
                     "report_id": "b973d82a-6932-4cad-ac9f-f647a3a9d204",
                 }).encode("utf-8"))
             else:
-                return (http.NO_CONTENT, b"")
+                request.setResponseCode(http.NO_CONTENT)
+                defer.returnValue(b"")
 
         except Exception as e:
             logger.error(f"Error processing abuse lookup request: {e}")
-            return (400, json.dumps({"error": "Bad Request"}).encode("utf-8"))
+            request.setResponseCode(400)
+            defer.returnValue(json.dumps({"error": "Bad Request"}).encode("utf-8"))
 
-    def __getattr__(self, name):
-        # This will handle other HTTP methods like GET, POST, etc.
-        # and return a 405 Method Not Allowed
-        return self.method_not_allowed
 
-    def method_not_allowed(self, _):
-        return (405, json.dumps({"error": "Method Not Allowed"}).encode("utf-8"))
+    def on_GET(self, request):
+        return self.method_not_allowed(request)
+
+    def on_POST(self, request):
+        return self.method_not_allowed(request)
+
+    # And similarly for other methods you want to block like DELETE, HEAD, etc.
+
+    def method_not_allowed(self, request):
+        request.setResponseCode(405)
+        return json.dumps({"error": "Method Not Allowed"}).encode("utf-8")
 
 def parse_config(config: dict) -> dict:
     return config
