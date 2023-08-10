@@ -5,6 +5,7 @@ import json
 from twisted.web import http
 from twisted.internet import defer
 from twisted.internet.defer import inlineCallbacks
+from twisted.web.server import NOT_DONE_YET
 
 logger = logging.getLogger(__name__)
 
@@ -32,8 +33,19 @@ class AbuseLookupResource:
         handler = getattr(self, f"on_{method}", None)
 
         if handler:
-            result = handler(request)
-            return result if isinstance(result, bytes) else self.method_not_allowed(request)
+            def _respond(result):
+                request.write(result)
+                request.finish()
+
+            def _error(failure):
+                logger.error(f"Error processing abuse lookup request: {failure}")
+                request.setResponseCode(500)
+                request.write(json.dumps({"error": "Internal Server Error"}).encode("utf-8"))
+                request.finish()
+
+            d = handler(request)
+            d.addCallbacks(_respond, _error)
+            return NOT_DONE_YET
         else:
             return self.method_not_allowed(request)
 
