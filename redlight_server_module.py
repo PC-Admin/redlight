@@ -1,27 +1,27 @@
 import logging
-from synapse.module_api import ModuleApi
-from twisted.web.http import OK, NO_CONTENT
 import json
+from synapse.module_api import ModuleApi
 from twisted.web import http
 from twisted.internet import defer
 from twisted.internet.defer import inlineCallbacks
 from twisted.web.server import NOT_DONE_YET
+from twisted.web.http import OK, NO_CONTENT
 
 logger = logging.getLogger(__name__)
 
-class AbuseLookupModule:
+class RedlightServerModule:
     def __init__(self, config: dict, api: ModuleApi):
         self._api = api
-        
+
         # Register the abuse_lookup endpoint
         api.register_web_resource(
             "/_matrix/loj/v1/abuse_lookup",
-            AbuseLookupResource(self)
+            RedlightServerResource(self)
         )
-        
-        logger.info("AbuseLookupModule initialized.")
 
-class AbuseLookupResource:
+        logger.info("RedlightServerModule initialized.")
+
+class RedlightServerResource:
 
     isLeaf = True
 
@@ -55,14 +55,14 @@ class AbuseLookupResource:
             # Extract body from the request
             body = yield request.content.read()
             content = body.decode("utf-8")
-            
+
             # Log the request to Synapse's log
             logger.info(f"Received abuse lookup request: {content}")
 
             # Extract room_id from the content
             data = json.loads(content)
             room_id = data["room_id"]
-            
+
             # TODO: Check the room_id against your list/database
             is_abuse = room_id == "!OEedGOAXDBahPyWMSQ:example.com"
 
@@ -97,5 +97,5 @@ class AbuseLookupResource:
 def parse_config(config: dict) -> dict:
     return config
 
-def create_module(api: ModuleApi, config: dict) -> AbuseLookupModule:
-    return AbuseLookupModule(config, api)
+def create_module(api: ModuleApi, config: dict) -> RedlightServerModule:
+    return RedlightServerModule(config, api)
