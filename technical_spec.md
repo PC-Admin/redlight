@@ -6,11 +6,11 @@ This document gives a detailed summary about how Redlight will work.
 
 ## Definitions
 
-Redlight List - A comprehensive list of abusive rooms on the Matrix network, abusive rooms are assigned a 'report_id' for identification as well as multiple 'tags' that describe the infringing content in said room.
+Source List - A comprehensive list of abusive rooms on the Matrix network, abusive rooms are assigned a 'report_id' for identification as well as multiple 'tags' that describe the infringing content in said room.
 
 Tags - Content tags that describe the type of abusive material found in a room, for example 'csam', 'lolicon' or 'terrorism'.
 
-Redlight Server - Will be trusted homeservers that are modified, they'll cache the Redlight list in memory while providing an API interface to "Redlight clients". Redlight servers will pick their own "content tags" that they are filtering, which by extension will allow clients to pick a level of filtering that suits them.
+Redlight Server - Will be trusted homeservers that are modified, they'll cache the source list in memory while providing an API interface to "Redlight clients". Redlight servers will pick their own "content tags" that they are filtering, which by extension will allow clients to pick a level of filtering that suits them.
 
 Redlight Client - Will be untrusted homeservers that are whitelisted by their desired Redlight server. When a user on a client homeserver attempts to join a room, the hash of the room_id will be sent to the redlight server, which will confirm or deny if the room is abusive, the client then denies the user entry to that room if it is flagged.
 
@@ -35,13 +35,13 @@ With Redlight only trusted parties will be allowed to run "redlight servers" and
 This creates a chain of trust where each party using this system must be accountable and can have their access revoked by the party "above" them if foul play is detected.
 
 
-## Securing the Redlight List
+## Securing the Source List
 
-The following methods will be used to secure the redlight list:
+The following methods will be used to secure the source list:
 
-- Avoid writing the redlight list to disk, redlight servers will simply pull the latest copy and store it in memory only.
+- Avoid writing the source list to disk, redlight servers will simply pull the latest copy and store it in memory only.
 - Whitelisting clients, redlight servers will only serve approved clients.
-- Ratelimiting the amount of requests, if a client is requesting too many rooms in a specified timeframe their access will be automatically cut-off, forcing them to ask their redlight server to re-enable them.
+- Ratelimiting the amount of requests, if a client homeservers user is finding too many rooms they could be limited?
 - Ratelimiting the amount of hits, if a client is finding too many abusive rooms in a specified timeframe their access will be automatically cut-off, forcing them to ask their redlight server to re-enable them.
 
 
@@ -69,7 +69,8 @@ return either `200 OK` to signify a match or `204 No Content` to signify no matc
 
 ```js
 {
-    "room_id_hash": "962c56a12d861d1921073916db9a1fb47ccc7887d3199690f1de156e57cac709"
+    "room_id_hash": "5dd9968ad279b8d918b1340dde1923ed0b99f59337f4905188955bf0f1d51d9f",
+    "user_id_hash": "6123512760887c37bb7b550a1a3caa8b8cd954706f4cc7fe934cb42611132627"
 }
 ```
 

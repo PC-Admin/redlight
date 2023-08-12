@@ -59,12 +59,13 @@ class RedlightServerResource:
             # Log the request to Synapse's log
             logger.info(f"Received abuse lookup request: {content}")
 
-            # Extract room_id from the content
+            # Extract room_id_hash and user_id_hash from the content
             data = json.loads(content)
-            room_id = data["room_id"]
+            room_id_hash = data["room_id_hash"]
+            user_id_hash = data["user_id_hash"]
 
-            # TODO: Check the room_id against your list/database
-            is_abuse = room_id == "!OEedGOAXDBahPyWMSQ:example.com"
+            # Check the room_id_hash against your list/database or hardcoded value
+            is_abuse = room_id_hash == "5dd9968ad279b8d918b1340dde1923ed0b99f59337f4905188955bf0f1d51d9f"
 
             if is_abuse:
                 request.setResponseCode(http.OK)
@@ -80,7 +81,6 @@ class RedlightServerResource:
             logger.error(f"Error processing abuse lookup request: {e}")
             request.setResponseCode(400)
             defer.returnValue(json.dumps({"error": "Bad Request"}).encode("utf-8"))
-
 
     def on_GET(self, request):
         return self.method_not_allowed(request)

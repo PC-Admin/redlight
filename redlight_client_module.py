@@ -44,6 +44,10 @@ class RedlightClientModule:
         hashed_room_id = self.double_hash_sha256(room)
         logger.info(f"Double hashed room ID: {hashed_room_id}")
 
+        # Double hash the username
+        hashed_user_id = self.double_hash_sha256(user)
+        logger.info(f"Double hashed user ID: {hashed_user_id}")
+
         # Log the desired message
         logger.info("Hello World!")
 
