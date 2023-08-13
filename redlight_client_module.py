@@ -12,20 +12,20 @@ from twisted.internet import defer
 from twisted.web.iweb import IBodyProducer
 from zope.interface import implementer
 
-# Define a handler and set its level and format
+# Setting up logging:
 file_handler = logging.FileHandler('/var/log/matrix-synapse/redlight.log')
 file_handler.setLevel(logging.INFO)
 formatter = logging.Formatter('%(asctime)s - %(name)s - %(levelname)s - %(message)s')
 file_handler.setFormatter(formatter)
 
-# Get your logger
 logger = logging.getLogger(__name__)
 logger.setLevel(logging.INFO)
 logger.addHandler(file_handler)
 
-# Ensure that this logger's messages don't propagate to the root logger
+# Prevent logger's messages from propagating to the root logger.
 logger.propagate = False
 
+# Define a custom producer to convert our JSON data for HTTP requests.
 @implementer(IBodyProducer)
 class _JsonProducer:
     def __init__(self, data):
@@ -46,17 +46,20 @@ class _JsonProducer:
 class RedlightClientModule:
     def __init__(self, config: dict, api: ModuleApi):
         self._api = api
+        # URL where we'll check if the room/user combination is allowed.
         self._redlight_url = config.get("redlight_url", "https://duckdomain.xyz/_matrix/loj/v1/abuse_lookup")
-        self._agent = Agent(reactor)
+        self._agent = Agent(reactor)  # Twisted agent for making HTTP requests.
 
         logger.info("RedLightClientModule initialized.")
 
+        # Register the user_may_join_room function to be called by Synapse before a user joins a room.
         api.register_spam_checker_callbacks(
             user_may_join_room=self.user_may_join_room
         )
 
     @staticmethod
     def double_hash_sha256(data: str) -> str:
+        """Double-hash the data with SHA256 for added security."""
         first_hash = hashlib.sha256(data.encode()).digest()
         double_hashed = hashlib.sha256(first_hash).hexdigest()
         return double_hashed
@@ -67,14 +70,17 @@ class RedlightClientModule:
 
         logger.info(f"User {user} is attempting to join room {room}. Invitation status: {is_invited}.")
 
+        # Double-hash the room and user IDs.
         hashed_room_id = self.double_hash_sha256(room)
         hashed_user_id = self.double_hash_sha256(user)
 
+        # Prepare the HTTP body.
         body = _JsonProducer({
             "room_id_hash": hashed_room_id,
             "user_id_hash": hashed_user_id
         })
 
+        # Make the HTTP request to our redlight server.
         response = await self._agent.request(
             b"PUT",
             self._redlight_url.encode(),
@@ -82,25 +88,30 @@ class RedlightClientModule:
             body
         )
 
+        # Extract the response body.
         response_body_bytes = await readBody(response)
         response_body = response_body_bytes.decode("utf-8")
 
         try:
+            # Try to parse the response body as JSON.
             response_json = json.loads(response_body)
         except json.JSONDecodeError:
             logger.error(f"Failed to decode response body: {response_body}")
-            #return NOT_SPAM  # default to allowing if there's an error
 
+        # Handle the response based on its HTTP status code.
         if response.code == 200:
             raise AuthError(403, "User not allowed to join this room")
         elif response.code == 204:
-            return NOT_SPAM
+            return NOT_SPAM  # Allow the user to join.
         else:
+            # Handle unexpected responses by logging them and allowing the user to join as a fallback.
             logger.error(f"Unexpected response code {response.code} with body: {response_body}")
-            return NOT_SPAM  # default to allowing if there's an unexpected response
+            return NOT_SPAM
 
+# Function to parse the module's configuration.
 def parse_config(config: dict) -> dict:
     return config
 
+# Factory function to create an instance of the RedlightClientModule.
 def create_module(api: ModuleApi, config: dict) -> RedlightClientModule:
     return RedlightClientModule(config, api)
