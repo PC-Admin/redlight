@@ -17,13 +17,13 @@ Redlight Client - Will be untrusted homeservers that are whitelisted by their de
 
 ## The Core Issue
 
-You might be wondering, why not just release a list of hashes of these room_ids and openly let people filter them?
+You might be wondering, why not just release a list of these room_ids (or their hashes) and openly let people filter them?
 
-Anything that can be used to identify abusive content can be used to identify abusive content ultimately. It's why access to these tools is typically so restricted. The problem isn’t that the hashes could be reversed, its that the hashes can be used to identify the abuse content.
+Ultimately anything that can be used to identify abusive content can be used to identify abusive content. It's why access to these tools is typically so restricted. The problem isn’t that the hashes could be reversed, it's that the hashes can be used to identify the abuse content.
 
 Imagine if you have 100 room_ids and you know 1 is abusive, well you could us an openly distributed hash-list to find that content and do the right thing and block it. Or you could use it to locate that content a lot faster to consume it and break the law with it.
 
-This repository attempts to be a solution to this problem.
+The redlight system attempts to be a solution to this problem.
 
 
 ## Chain of Trust
@@ -39,19 +39,35 @@ This creates a chain of trust where each party using this system must be account
 
 The following methods will be used to secure the source list:
 
-- Avoid writing the source list to disk, redlight servers will simply pull the latest copy and store it in memory only.
-- Whitelisting clients, redlight servers will only serve approved clients.
-- Ratelimiting the amount of requests, if a client homeservers user is finding too many rooms they could be limited?
-- Ratelimiting the amount of hits, if a client is finding too many abusive rooms in a specified timeframe their access will be automatically cut-off, forcing them to ask their redlight server to re-enable them.
+- Avoid writing the source list to disk, redlight servers will simply pull the latest copy of the source list and store it in memory only.
+- Whitelisting clients, redlight servers will only serve approved redlight clients, filtering requests by their IP.
+- Ratelimiting the amount of requests, if a client homeserver or user is making too many requests the server or user in question will be cut off from the redlight server. (It will start throwing errors with every request.)
+- Ratelimiting the amount of hits, if a clients user is finding too many abusive rooms in a specified timeframe that account will be "frozen", this means the redlight server will return an error (deny access) to every future join request that user account makes.
 
 
-# Other Design Goals
+## Account Freezes
 
-Blocking not monitoring, to avoid scope creep the point of this system will only be to block access to known abusive rooms.
+If a user_id attempts to access an abusive room 3 or more times the redlight server will start throwing errors for every future join request made by that account. This effectively "freezes" the user account and prevents any further illicit activity. It also prevents the user from reverse engineering the source list by attempting to enter many abusive rooms.
 
-Client homeserver privacy, by double hashing room_ids before sending them to redlight servers analysis and collection about the rooms accessed by a redlight clients users becomes unfeasible.
+Freezes on accounts are performed by the redlight server, to unfreeze an account a request needs to be made by the redlight client to their redlight server.
 
-Config-driven and stateless, ideally redlight clients and servers will be "stateless", so no data will persist between reboots and their behaviour will be defined entirely in configuration files.
+
+## Real-time Alerting
+
+The redlight client module will alert the homeserver owners via an "alert room", where notifications of the following will be sent:
+- If a user attempts to enter an abusive room and is denied access.
+- If a users account has been frozen by the redlight server.
+
+This allows homeserver owners and moderators to act quickly in response to these incidents.
+
+
+## Other Design Goals
+
+Blocking not monitoring, to avoid scope creep the point of this system will only be to block access to known abusive rooms. Further monitoring and reporting of any users entering abusive rooms should be performed by the owners of that homeserver. (The redlight client.)
+
+Client homeserver privacy, by double hashing the user_ids and room_ids before sending them to redlight server, analysis and collection about the rooms accessed by a redlight clients users is limited.
+
+~~Config-driven and stateless, ideally redlight clients and servers will be "stateless", so no data will persist between reboots and their behaviour will be defined entirely in configuration files.~~
 
 
 ## LJS-4.draft: Abuse Lookup API V1
@@ -87,3 +103,18 @@ return either `200 OK` to signify a match or `204 No Content` to signify no matc
     "report_id": "b973d82a-6932-4cad-ac9f-f647a3a9d204",
 }
 ```
+
+
+## Unanswered Questions
+
+- How many join requests from a user is abnormal?
+
+More then 10 join requests in a minute might seem suspicious... (What about bots?)
+
+- How many join requests from a redlight client homeserver is abnormal?
+
+- How many join requests can a redlight server even process?
+
+- What other methods (besides IP) could be used to restrict requests from redlight client homeservers?
+
+- What other methods could be used to secure the source list and prevent interception/leaking?
