@@ -1,20 +1,41 @@
 import logging
 import hashlib
 import json
-import http.client
 from typing import Union
-from synapse.module_api import ModuleApi
+from synapse.module_api import ModuleApi, NOT_SPAM
 from synapse.api.errors import AuthError
-from twisted.internet import defer
 from twisted.web.client import Agent, readBody
 from twisted.web.http_headers import Headers
+from twisted.web.iweb import IBodyProducer
+from twisted.internet import reactor
+from twisted.internet import defer
+from twisted.web.iweb import IBodyProducer
+from zope.interface import implementer
 
 logger = logging.getLogger(__name__)
+
+@implementer(IBodyProducer)
+class _JsonProducer:
+    def __init__(self, data):
+        self._data = json.dumps(data).encode("utf-8")
+        self.length = len(self._data)
+
+    def startProducing(self, consumer):
+        consumer.write(self._data)
+        return defer.succeed(None)
+
+    def pauseProducing(self):
+        pass
+
+    def stopProducing(self):
+        pass
+
 
 class RedlightClientModule:
     def __init__(self, config: dict, api: ModuleApi):
         self._api = api
         self._redlight_url = config.get("redlight_url", "https://duckdomain.xyz/_matrix/loj/v1/abuse_lookup")
+        self._agent = Agent(reactor)
 
         logger.info("RedLightClientModule initialized.")
 
@@ -37,28 +58,34 @@ class RedlightClientModule:
         hashed_room_id = self.double_hash_sha256(room)
         hashed_user_id = self.double_hash_sha256(user)
 
-        # Send the PUT request
-        connection = http.client.HTTPSConnection("localhost:8008")
-        headers = {
-            "Content-Type": "application/json"
-        }
-        body = json.dumps({
+        body = _JsonProducer({
             "room_id_hash": hashed_room_id,
             "user_id_hash": hashed_user_id
         })
-        connection.request("PUT", "/_matrix/loj/v1/abuse_lookup", body, headers)
-        response = connection.getresponse()
-        response_body = response.read()
 
-        # Process the response from the server
-        result = json.loads(response_body.decode())
-        #logger.info(f'response.status = {response.status} and result["error"] = {result["error"]}')
-        if response.status == 200:
-            # Raise an AuthError if the API returns OK 200
+        response = await self._agent.request(
+            b"PUT",
+            self._redlight_url.encode(),
+            Headers({'Content-Type': [b'application/json']}),
+            body
+        )
+
+        response_body_bytes = await readBody(response)
+        response_body = response_body_bytes.decode("utf-8")
+
+        try:
+            response_json = json.loads(response_body)
+        except json.JSONDecodeError:
+            logger.error(f"Failed to decode response body: {response_body}")
+            #return NOT_SPAM  # default to allowing if there's an error
+
+        if response.code == 200:
             raise AuthError(403, "User not allowed to join this room")
+        elif response.code == 204:
+            return NOT_SPAM
         else:
-            # Allow joining if no issue detected
-            return self._api.NOT_SPAM
+            logger.error(f"Unexpected response code {response.code} with body: {response_body}")
+            return NOT_SPAM  # default to allowing if there's an unexpected response
 
 def parse_config(config: dict) -> dict:
     return config

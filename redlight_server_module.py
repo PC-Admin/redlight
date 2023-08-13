@@ -65,7 +65,7 @@ class RedlightServerResource:
             user_id_hash = data["user_id_hash"]
 
             # Check the room_id_hash against your list/database or hardcoded value
-            is_abuse = room_id_hash == "5dd9968ad279b8d918b1340dde1923ed0b99f59337f4905188955bf0f1d51d9f"
+            is_abuse = room_id_hash == "ee180279a57f716e5801335a2914e228667f363e460ccabcc49e8fd879e1be4a"
 
             if is_abuse:
                 request.setResponseCode(http.OK)
