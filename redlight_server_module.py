@@ -7,7 +7,19 @@ from twisted.internet.defer import inlineCallbacks
 from twisted.web.server import NOT_DONE_YET
 from twisted.web.http import OK, NO_CONTENT
 
+# Define a handler and set its level and format
+file_handler = logging.FileHandler('/var/log/matrix-synapse/redlight.log')
+file_handler.setLevel(logging.INFO)
+formatter = logging.Formatter('%(asctime)s - %(name)s - %(levelname)s - %(message)s')
+file_handler.setFormatter(formatter)
+
+# Get your logger
 logger = logging.getLogger(__name__)
+logger.setLevel(logging.INFO)
+logger.addHandler(file_handler)
+
+# Ensure that this logger's messages don't propagate to the root logger
+logger.propagate = False
 
 class RedlightServerModule:
     def __init__(self, config: dict, api: ModuleApi):
