@@ -66,12 +66,14 @@ class RedlightServerResource:
             d.addCallbacks(_respond, _error)
             return NOT_DONE_YET  # indicates asynchronous processing
         else:
+            logger.warning(f"Received a request with unsupported method: {method}")
             # If no handler is found for the method, return "Method Not Allowed".
             return self.method_not_allowed(request)
 
     # Handle PUT requests to the endpoint.
     @inlineCallbacks
     def on_PUT(self, request):
+        logger.info(f"Processing PUT request from {request.getClientIP()}.")
         try:
             # Read and decode the request body.
             body = yield request.content.read()
@@ -89,17 +91,19 @@ class RedlightServerResource:
 
             # Respond based on whether the request is identified as abusive or not.
             if is_abuse:
+                logger.warning(f"Abuse detected from {request.getClientIP()}, user_id_hash: {user_id_hash} room_id_hash: {room_id_hash}.")
                 request.setResponseCode(http.OK)
                 defer.returnValue(json.dumps({
                     "error": None,
                     "report_id": "b973d82a-6932-4cad-ac9f-f647a3a9d204",
                 }).encode("utf-8"))
             else:
+                logger.info(f"No abuse detected for request from {request.getClientIP()}.")
                 request.setResponseCode(http.NO_CONTENT)
                 defer.returnValue(b"")
 
         except Exception as e:
-            logger.error(f"Error processing abuse lookup request: {e}")
+            logger.error(f"Error processing abuse lookup PUT request from {request.getClientIP()}: {e}")
             request.setResponseCode(400)
             defer.returnValue(json.dumps({"error": "Bad Request"}).encode("utf-8"))
 
@@ -113,6 +117,7 @@ class RedlightServerResource:
 
     # General method to respond with "Method Not Allowed" for disallowed or unrecognized HTTP methods.
     def method_not_allowed(self, request):
+        logger.warning(f"Method Not Allowed: {request.method.decode('ascii')} from {request.getClientIP()}.")
         request.setResponseCode(405)
         return json.dumps({"error": "Method Not Allowed"}).encode("utf-8")
 

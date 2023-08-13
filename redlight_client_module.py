@@ -47,10 +47,11 @@ class RedlightClientModule:
     def __init__(self, config: dict, api: ModuleApi):
         self._api = api
         # URL where we'll check if the room/user combination is allowed.
-        self._redlight_url = config.get("redlight_url", "https://duckdomain.xyz/_matrix/loj/v1/abuse_lookup")
+        self._redlight_url = config.get("redlight_url", "http://127.0.0.1:8008/_matrix/loj/v1/abuse_lookup")
         self._agent = Agent(reactor)  # Twisted agent for making HTTP requests.
 
         logger.info("RedLightClientModule initialized.")
+        logger.info(f"Redlight Server URL set to: {self._redlight_url}")
 
         # Register the user_may_join_room function to be called by Synapse before a user joins a room.
         api.register_spam_checker_callbacks(
@@ -92,6 +93,9 @@ class RedlightClientModule:
         response_body_bytes = await readBody(response)
         response_body = response_body_bytes.decode("utf-8")
 
+        # Log the response content
+        logger.info(f"Received response with code {response.code}. Content: {response_body}")
+
         try:
             # Try to parse the response body as JSON.
             response_json = json.loads(response_body)
@@ -100,12 +104,15 @@ class RedlightClientModule:
 
         # Handle the response based on its HTTP status code.
         if response.code == 200:
-            raise AuthError(403, "User not allowed to join this room")
+            logger.warn(f"User {user} not allowed to join room {room}.")
+            raise AuthError(403, "User not allowed to join this room.")
         elif response.code == 204:
+            logger.info(f"User {user} allowed to join room {room}.")
             return NOT_SPAM  # Allow the user to join.
         else:
             # Handle unexpected responses by logging them and allowing the user to join as a fallback.
             logger.error(f"Unexpected response code {response.code} with body: {response_body}")
+            logger.warn(f"Defaulting to allowing user {user} to join due to unexpected response code.")
             return NOT_SPAM
 
 # Function to parse the module's configuration.
