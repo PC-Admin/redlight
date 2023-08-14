@@ -14,7 +14,7 @@ logger.addHandler(file_handler)
 # Prevent logger's messages from propagating to the root logger.
 logger.propagate = False
 
-class RedlightBot:
+class RedlightAlertBot:
     def __init__(self, homeserver, access_token):
         self.homeserver = homeserver
         self.access_token = access_token
@@ -35,4 +35,4 @@ class RedlightBot:
         if response.status_code == 200:
             logger.info("Alert message sent successfully!")
         else:
-            logger.info(f"Failed to send allert message. Status code: {response.status_code}, Response: {response.text}")
+            logger.info(f"Failed to send alert message. Status code: {response.status_code}, Response: {response.text}")
