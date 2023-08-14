@@ -117,4 +117,6 @@ More then 10 join requests in a minute might seem suspicious... (What about bots
 
 - What other methods (besides IP) could be used to restrict requests from redlight client homeservers?
 
+API tokens, certificate-based authentication, or domain whitelisting?
+
 - What other methods could be used to secure the source list and prevent interception/leaking?

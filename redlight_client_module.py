@@ -1,6 +1,7 @@
 import logging
 import hashlib
 import json
+import asyncio
 from typing import Union
 from synapse.module_api import ModuleApi, NOT_SPAM
 from synapse.api.errors import AuthError
@@ -11,6 +12,7 @@ from twisted.internet import reactor
 from twisted.internet import defer
 from twisted.web.iweb import IBodyProducer
 from zope.interface import implementer
+from redlight_bot import RedlightBot
 
 # Setting up logging:
 file_handler = logging.FileHandler('/var/log/matrix-synapse/redlight.log')
@@ -46,12 +48,23 @@ class _JsonProducer:
 class RedlightClientModule:
     def __init__(self, config: dict, api: ModuleApi):
         self._api = api
-        # URL where we'll check if the room/user combination is allowed.
-        self._redlight_url = config.get("redlight_url", "http://127.0.0.1:8008/_matrix/loj/v1/abuse_lookup")
+        # Your homeserver's URL
+        self._homeserver_url = "https://" + config.get("homeserver_url", "127.0.0.1:8008")
+        # The API token of your redlight bot user
+        self._redlight_bot_user = config.get("redlight_bot_token", "")
+        # The alert room your redlight bot will post too
+        self._redlight_alert_room = config.get("redlight_alert_room", "")
+        # Redlight server endpoint, where we'll check if the room/user combination is allowed.
+        self._redlight_endpoint = "https://" + config.get("redlight_server", "127.0.0.1:8008") + "/_matrix/loj/v1/abuse_lookup"
         self._agent = Agent(reactor)  # Twisted agent for making HTTP requests.
 
+        # Create an instance of the RedlightBot
+        self.bot = RedlightBot(self._homeserver_url, self._redlight_bot_user)  # Adjust the homeserver and token as required
+
         logger.info("RedLightClientModule initialized.")
-        logger.info(f"Redlight Server URL set to: {self._redlight_url}")
+        logger.info(f"Redlight bot user token: {self._redlight_bot_user}")
+        logger.info(f"Redlight alert room: {self._redlight_alert_room}")
+        logger.info(f"Redlight server endpoint set to: {self._redlight_endpoint}")
 
         # Register the user_may_join_room function to be called by Synapse before a user joins a room.
         api.register_spam_checker_callbacks(
@@ -84,7 +97,7 @@ class RedlightClientModule:
         # Make the HTTP request to our redlight server.
         response = await self._agent.request(
             b"PUT",
-            self._redlight_url.encode(),
+            self._redlight_endpoint.encode(),
             Headers({'Content-Type': [b'application/json']}),
             body
         )
@@ -105,7 +118,13 @@ class RedlightClientModule:
         # Handle the response based on its HTTP status code.
         if response.code == 200:
             logger.warn(f"User {user} not allowed to join room {room}.")
-            raise AuthError(403, "User not allowed to join this room.")
+            # Create the alert message
+            alert_message = f"WARNING: Incident detected! User {user} was attempting to access this restricted room: {room}"
+            # Start the synchronous send_alert_message method in a thread but don't await it
+            loop = asyncio.get_event_loop()
+            loop.run_in_executor(None, self.bot.send_alert_message, self._redlight_alert_room, alert_message)
+            # Throw a 403 error that the user will see
+            raise AuthError(403, "PERMISSION DENIED - This room violates server policy.")
         elif response.code == 204:
             logger.info(f"User {user} allowed to join room {room}.")
             return NOT_SPAM  # Allow the user to join.
