@@ -12,7 +12,7 @@ from twisted.internet import reactor
 from twisted.internet import defer
 from twisted.web.iweb import IBodyProducer
 from zope.interface import implementer
-from redlight_bot import RedlightBot
+from redlight_alert_bot import RedlightAlertBot
 
 # Setting up logging:
 file_handler = logging.FileHandler('/var/log/matrix-synapse/redlight.log')
@@ -51,18 +51,18 @@ class RedlightClientModule:
         # Your homeserver's URL
         self._homeserver_url = "https://" + config.get("homeserver_url", "127.0.0.1:8008")
         # The API token of your redlight bot user
-        self._redlight_bot_user = config.get("redlight_bot_token", "")
+        self._redlight_alert_bot_token = config.get("redlight_alert_bot_token", "")
         # The alert room your redlight bot will post too
         self._redlight_alert_room = config.get("redlight_alert_room", "")
         # Redlight server endpoint, where we'll check if the room/user combination is allowed.
         self._redlight_endpoint = "https://" + config.get("redlight_server", "127.0.0.1:8008") + "/_matrix/loj/v1/abuse_lookup"
         self._agent = Agent(reactor)  # Twisted agent for making HTTP requests.
 
-        # Create an instance of the RedlightBot
-        self.bot = RedlightBot(self._homeserver_url, self._redlight_bot_user)  # Adjust the homeserver and token as required
+        # Create an instance of the RedlightAlertBot
+        self.bot = RedlightAlertBot(self._homeserver_url, self._redlight_alert_bot_token)  # Adjust the homeserver and token as required
 
         logger.info("RedLightClientModule initialized.")
-        logger.info(f"Redlight bot user token: {self._redlight_bot_user}")
+        logger.info(f"Redlight bot user token: {self._redlight_alert_bot_token}")
         logger.info(f"Redlight alert room: {self._redlight_alert_room}")
         logger.info(f"Redlight server endpoint set to: {self._redlight_endpoint}")
 
