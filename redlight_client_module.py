@@ -129,9 +129,11 @@ class RedlightClientModule:
             logger.info(f"User {user} allowed to join room {room}.")
             return NOT_SPAM  # Allow the user to join.
         else:
-            # Handle unexpected responses by logging them and allowing the user to join as a fallback.
-            logger.error(f"Unexpected response code {response.code} with body: {response_body}")
-            logger.warn(f"Defaulting to allowing user {user} to join due to unexpected response code.")
+            alert_message = f"Unexpected response code {response.code} with body {response_body}. Defaulting to allowing user {user} to join due to unexpected response code."
+            # Handle unexpected responses by alerting and logging them, and allowing the user to join as a fallback.
+            logger.error(alert_message)
+            loop = asyncio.get_event_loop()
+            loop.run_in_executor(None, self.bot.send_alert_message, self._redlight_alert_room, alert_message)
             return NOT_SPAM
 
 # Function to parse the module's configuration.
