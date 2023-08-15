@@ -39,11 +39,11 @@ class SourceDataManager:
         self.update_data()
 
     def fetch_file_from_gitea(self, repo_url, token, file_path):
-        # Construct the API URL for the file
+        # Construct the API URL for the file.
         base_url = repo_url.rstrip("/")
         api_url = f"{base_url}/contents/{file_path}?ref=main&access_token={token}"
 
-        # Log attempt to fetch the file
+        # Log attempt to fetch the file.
         logger.info(f"Attempting to update source list, fetching file from: {api_url}")
 
         response = requests.get(api_url)
@@ -70,10 +70,6 @@ class SourceDataManager:
             raw_content = self.fetch_file_from_gitea(self._source_repo_url, self._git_token, self._source_list_file_path)
             content = json.loads(raw_content)
 
-            # Count and log the number of entries that match the filtering criteria
-            matching_reports_count = sum(1 for report in content if any(tag in self._filtered_tags for tag in report["report_info"]["tags"]))
-            logger.info(f"Number of reports matching the filtering criteria: {matching_reports_count}")
-
             self._source_dict = {
                 report["room"]["room_id_hash"]: report["report_id"]
                 for report in content
@@ -81,7 +77,7 @@ class SourceDataManager:
             }
 
             self._source_dict_last_update = now
-            logger.info(f"Source data updated. Number of entries: {len(self._source_dict)}")
+            logger.info(f"Source data updated. Number of reports matching the filtered tags: {len(self._source_dict)}")
 
     def get_data(self):
         self.update_data()
@@ -107,6 +103,7 @@ class RedlightServerResource:
         self._module = module
         self._data_manager = SourceDataManager(module, config)
         self._source_dict = self._data_manager.get_data()
+        self._api_tokens = ["stong-access-token"]
         # Logging for debug purposes
         logger.debug(f"Filtered room_id_hashes: {list(self._source_dict.keys())}")
 
@@ -131,7 +128,7 @@ class RedlightServerResource:
 
             d = handler(request)
             d.addCallbacks(_respond, _error)
-            # indicates asynchronous processing
+            # Indicates asynchronous processing.
             return NOT_DONE_YET
         else:
             logger.warning(f"Received a request with unsupported method: {method}")
@@ -152,11 +149,19 @@ class RedlightServerResource:
             data = json.loads(content)
             room_id_hash = data["room_id_hash"]
             user_id_hash = data["user_id_hash"]
+            api_token = data["api_token"]
 
-            # Update and fetch the source_dict when required
+            # Check if the provided API token is valid.
+            if api_token not in self._api_tokens:
+                logger.warning(f"Invalid API token provided by {request.getClientIP()}.")
+                request.setResponseCode(401)
+                defer.returnValue(json.dumps({"error": "Unauthorized"}).encode("utf-8"))
+                return
+
+            # Update and fetch the source_dict when required.
             source_dict = self._data_manager.get_data()
 
-            # Check for abuse based on the room_id_hash and the filtered source list
+            # Check for abuse based on the room_id_hash and the filtered source list.
             is_abuse = room_id_hash in source_dict
 
             # Respond based on whether the request is identified as abusive or not.

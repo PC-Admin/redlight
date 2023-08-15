@@ -55,6 +55,8 @@ class RedlightClientModule:
         self._redlight_alert_room = config.get("redlight_alert_room", "")
         # Redlight server endpoint, where we'll check if the room/user combination is allowed.
         self._redlight_endpoint = "https://" + config.get("redlight_server", "127.0.0.1:8008") + "/_matrix/loj/v1/abuse_lookup"
+        # Redlight API token
+        self._redlight_api_token = config.get("redlight_api_token", "")
         self._agent = Agent(reactor)  # Twisted agent for making HTTP requests.
 
         # Create an instance of the RedlightAlertBot
@@ -90,7 +92,8 @@ class RedlightClientModule:
         # Prepare the HTTP body.
         body = _JsonProducer({
             "room_id_hash": hashed_room_id,
-            "user_id_hash": hashed_user_id
+            "user_id_hash": hashed_user_id,
+            "api_token": self._redlight_api_token
         })
 
         # Make the HTTP request to our redlight server.
