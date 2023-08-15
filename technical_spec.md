@@ -81,7 +81,9 @@ All documented endpoints require a bearer token supplied in the `Authorization` 
 The `abuse_lookup` endpoint returns if the supplied `room_id` is reported to contain a filtered tag in Redlight List. The endpoint will
 return either `200 OK` to signify a match or `204 No Content` to signify no match.
 
-- `room_id_hash:` String. A valid Room ID that has been hashed twice with sha256
+- `room_id_hash:` String. A valid Room ID that has been hashed twice with sha256.
+- `user_id_hash:` String. A valid User ID that has been hashed twice with sha256.
+- `api_token:` String. A 40 digit alphanumeric token used for endpoint authentication.
 
 ```js
 {
