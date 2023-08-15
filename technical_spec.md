@@ -67,7 +67,7 @@ Blocking not monitoring, to avoid scope creep the point of this system will only
 
 Client homeserver privacy, by double hashing the user_ids and room_ids before sending them to redlight server, analysis and collection about the rooms accessed by a redlight clients users is limited.
 
-~~Config-driven and stateless, ideally redlight clients and servers will be "stateless", so no data will persist between reboots and their behaviour will be defined entirely in configuration files.~~
+~~Config-driven and stateless, ideally redlight clients and servers will be "stateless", so no data will persist between reboots and their behaviour will be defined entirely in configuration files.~~ A database is probably needed for redlight servers.
 
 
 ## LJS-4.draft: Abuse Lookup API V1
@@ -86,7 +86,8 @@ return either `200 OK` to signify a match or `204 No Content` to signify no matc
 ```js
 {
     "room_id_hash": "5dd9968ad279b8d918b1340dde1923ed0b99f59337f4905188955bf0f1d51d9f",
-    "user_id_hash": "6123512760887c37bb7b550a1a3caa8b8cd954706f4cc7fe934cb42611132627"
+    "user_id_hash": "6123512760887c37bb7b550a1a3caa8b8cd954706f4cc7fe934cb42611132627",
+    "api_token": "Um05ULjUngjVbibdgtipo96VUSrEexOi8z7F8HfK"
 }
 ```
 
@@ -119,4 +120,9 @@ More then 10 join requests in a minute might seem suspicious... (What about bots
 
 API tokens, certificate-based authentication, or domain whitelisting?
 
+API tokens seems like the move.
+
 - What other methods could be used to secure the source list and prevent interception/leaking?
+
+TPM/secure enclaves?
+Encrypted in memory?
