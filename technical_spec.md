@@ -12,14 +12,14 @@ Tags - Content tags that describe the type of abusive material found in a room, 
 
 Redlight Server - Will be trusted homeservers that are modified, they'll cache the source list in memory while providing an API interface to "Redlight clients". Redlight servers will pick their own "content tags" that they are filtering, which by extension will allow clients to pick a level of filtering that suits them.
 
-Redlight Client - Will be untrusted homeservers that are whitelisted by their desired Redlight server. When a user on a client homeserver attempts to join a room, the hash of the room_id will be sent to the redlight server, which will confirm or deny if the room is abusive, the client then denies the user entry to that room if it is flagged.
+Redlight Client - Will be untrusted homeservers that are whitelisted by their desired Redlight server. When a user on a client homeserver attempts to join a room, the hash of the user_id and room_id, as well as an auth token will be sent to the redlight server, which will confirm or deny if the room is abusive. The client will then grant or deny the user entry to that room.
 
 
 ## The Core Issue
 
 You might be wondering, why not just release a list of these room_ids (or their hashes) and openly let people filter them?
 
-Ultimately anything that can be used to identify abusive content can be used to identify abusive content. It's why access to these tools is typically so restricted. The problem isn’t that the hashes could be reversed, it's that the hashes can be used to identify the abuse content.
+Ultimately anything that can be used to identify abusive content, can be used to identify abusive content. It's why access to these tools is typically so restricted. The problem isn’t that the hashes could be reversed, it's that the hashes can be used to identify the abusive content.
 
 Imagine if you have 100 room_ids and you know 1 is abusive, well you could us an openly distributed hash-list to find that content and do the right thing and block it. Or you could use it to locate that content a lot faster to consume it and break the law with it.
 
