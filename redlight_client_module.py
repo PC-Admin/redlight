@@ -44,7 +44,6 @@ class _JsonProducer:
     def stopProducing(self):
         pass
 
-
 class RedlightClientModule:
     def __init__(self, config: dict, api: ModuleApi):
         self._api = api
