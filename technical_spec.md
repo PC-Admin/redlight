@@ -26,6 +26,13 @@ Imagine if you have 100 room_ids and you know 1 is abusive, well you could us an
 The redlight system attempts to be a solution to this problem.
 
 
+## user_may_join_room
+
+Since Redlight will basically restrict access to sections of the network that contain abusive material the most ideal "spam checker" interface in Synapse would be the [user_may_join_room](https://matrix-org.github.io/synapse/latest/modules/spam_checker_callbacks.html#user_may_join_room). It's called when a user attempts to join a room.
+
+By using this interface we can prevent users from entering these rooms at all, this guarantees that the harmful content in these rooms won't be synced to the redlight client homeserver at all.
+
+
 ## Chain of Trust
 
 If distributing a hash-list openly is dangerous, the simplest way to make it safe to close up the distribution of it.
