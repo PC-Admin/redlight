@@ -22,16 +22,11 @@ logger.propagate = False
 class RedlightClientModule:
     def __init__(self, config: dict, api: ModuleApi):
         self._api = api
-        # Your homeserver's URL
-        self._homeserver_url = "https://" + config.get("homeserver_url", "127.0.0.1:8008")
-        # The API token of your redlight bot user
-        self._redlight_alert_bot_token = config.get("redlight_alert_bot_token", "")
-        # The alert room your redlight bot will post too
-        self._redlight_alert_room = config.get("redlight_alert_room", "")
-        # Redlight server endpoint, where we'll check if the room/user combination is allowed.
-        self._redlight_endpoint = "https://" + config.get("redlight_server", "127.0.0.1:8008") + "/_matrix/loj/v1/abuse_lookup"
-        # Redlight API token
-        self._redlight_api_token = config.get("redlight_api_token", "")
+        self._homeserver_url = "https://" + config.get("homeserver_url", "127.0.0.1:8008") # Your homeserver's URL
+        self._redlight_alert_bot_token = config.get("redlight_alert_bot_token", "") # The API token of your redlight bot user
+        self._redlight_alert_room = config.get("redlight_alert_room", "") # The alert room your redlight bot will post too
+        self._redlight_endpoint = "https://" + config.get("redlight_server", "127.0.0.1:8008") + "/_matrix/loj/v1/abuse_lookup" # Redlight server endpoint, where we'll be sending the Abuse Lookups
+        self._redlight_api_token = config.get("redlight_api_token", "") # Redlight API token
 
         # Use the SimpleHttpClient from ModuleApi
         self.http_client = api.http_client
@@ -40,7 +35,7 @@ class RedlightClientModule:
         self.bot = RedlightAlertBot(self._homeserver_url, self._redlight_alert_bot_token)  # Adjust the homeserver and token as required
 
         logger.info("RedLightClientModule initialized.")
-        logger.info(f"Redlight bot user token: {self._redlight_alert_bot_token}")
+        logger.debug(f"Redlight bot user token: {self._redlight_alert_bot_token}")
         logger.info(f"Redlight alert room: {self._redlight_alert_room}")
         logger.info(f"Redlight server endpoint set to: {self._redlight_endpoint}")
 
@@ -61,11 +56,11 @@ class RedlightClientModule:
 
         logger.info(f"User {user} is attempting to join room {room}. Invitation status: {is_invited}.")
 
-        # Double-hash the room and user IDs.
+        # BLAKE2 hash the room and user IDs
         hashed_room_id = self.hash_blake2(room)
         hashed_user_id = self.hash_blake2(user)
 
-        # Replace the Agent request logic with the BaseHttpClient request logic
+        # Make Abuse Lookup query with SimpleHTTPClient module
         try:
             response = await self.http_client.request(
                 "PUT",
@@ -78,7 +73,8 @@ class RedlightClientModule:
                 headers={'Content-Type': 'application/json'}
             )
 
-            response_body = await response.content()  # Fetch the content of the response
+            # Wait and fetch the content of the response
+            response_body = await response.content()  
 
             # Log the response content
             logger.info(f"Received response with code {response.code}. Content: {response_body}. Response: {response}")
@@ -91,7 +87,7 @@ class RedlightClientModule:
                 except json.JSONDecodeError:
                     logger.error(f"Failed to decode response body: {response_body}")
 
-            # Handle the response based on its HTTP status code
+            # If HTTP code is 'OK' then abusive content is detected
             if response.code == 200:
                 logger.warn(f"User {user} not allowed to join restricted room. report_id: {response_json['report_id']} room_id: {room}.")
                 # Create the alert message
@@ -101,16 +97,22 @@ class RedlightClientModule:
                 loop.run_in_executor(None, self.bot.send_alert_message, self._redlight_alert_room, alert_message)
                 # Throw a 403 error that the user will see
                 raise AuthError(403, "PERMISSION DENIED - This room violates server policy.")
+
+            # If 'No Content, allow the user to join
             elif response.code == 204:
                 logger.info(f"User {user} allowed to join room {room}.")
-                return NOT_SPAM  # Allow the user to join
+                return NOT_SPAM 
+
+            # If response unexpected, allow the user to join by default (fail softly)
             else:
+                # Send an alert that the redlight client seems to be failing, with the response details
                 alert_message = f"Unexpected response code {response.code} with body {response_body}. Defaulting to allowing user {user} to join due to unexpected response code."
                 # Handle unexpected responses by alerting and logging them, and allowing the user to join as a fallback
                 logger.error(alert_message)
                 loop = asyncio.get_event_loop()
                 loop.run_in_executor(None, self.bot.send_alert_message, self._redlight_alert_room, alert_message)
                 return NOT_SPAM
+
         except AuthError as ae:
             # This will catch the AuthError specifically and log it as an expected error
             logger.info(f"User action denied with reason: {ae}")
