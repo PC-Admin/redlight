@@ -30,9 +30,9 @@ logger.propagate = False
 class SourceDataManager:
     def __init__(self, module, config):
         self._module = module
-        self._source_repo_url = config.get("source_repo_url", "")
-        self._git_token = config.get("git_token", "")
-        self._source_list_file_path = config.get("source_list_file_path", "dist/summaries.json")
+        self._source_repo_url = config.get("redlight_source_repo_url", "")
+        self._git_token = config.get("redlight_git_token", "")
+        self._source_list_file_path = config.get("redlight_source_list_file_path", "dist/summaries.json")
         self._filtered_tags = config.get("filtered_tags", [])
         self._source_dict = {}
         self._source_dict_last_update = None
@@ -103,7 +103,8 @@ class RedlightServerResource:
         self._module = module
         self._data_manager = SourceDataManager(module, config)
         self._source_dict = self._data_manager.get_data()
-        self._api_tokens = ["stong-access-token"]
+        self._client_api_tokens = config.get("redlight_client_tokens", [])
+        self._filtered_tags = config.get("filtered_tags", [])
         # Logging for debug purposes
         logger.debug(f"Filtered room_id_hashes: {list(self._source_dict.keys())}")
 
@@ -152,7 +153,7 @@ class RedlightServerResource:
             api_token = data["api_token"]
 
             # Check if the provided API token is valid.
-            if api_token not in self._api_tokens:
+            if api_token not in self._client_api_tokens:
                 logger.warning(f"Invalid API token provided by {request.getClientIP()}.")
                 request.setResponseCode(401)
                 defer.returnValue(json.dumps({"error": "Unauthorized"}).encode("utf-8"))
