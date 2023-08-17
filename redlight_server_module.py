@@ -104,7 +104,7 @@ class RedlightServerResource:
         self._data_manager = SourceDataManager(module, config)
         self._source_dict = self._data_manager.get_data()
         self._client_api_tokens = config.get("redlight_client_tokens", [])
-        self._filtered_tags = config.get("filtered_tags", [])
+        self._filtered_tags = config.get("redlight_filtered_tags", [])
         # Logging for debug purposes
         logger.debug(f"Filtered room_id_hashes: {list(self._source_dict.keys())}")
 
