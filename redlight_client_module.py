@@ -2,7 +2,6 @@ import logging
 import hashlib
 import json
 import asyncio
-from typing import Union
 from synapse.module_api import ModuleApi, NOT_SPAM
 from synapse.api.errors import AuthError
 from redlight_alert_bot import RedlightAlertBot
@@ -58,7 +57,7 @@ class RedlightClientModule:
 
     async def user_may_join_room(
         self, user: str, room: str, is_invited: bool
-    ) -> Union["synapse.module_api.NOT_SPAM", "synapse.module_api.errors.Codes"]:
+    ) -> NOT_SPAM:
 
         logger.info(f"User {user} is attempting to join room {room}. Invitation status: {is_invited}.")
 
