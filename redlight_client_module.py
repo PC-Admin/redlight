@@ -73,11 +73,10 @@ class RedlightClientModule:
         )
 
     @staticmethod
-    def double_hash_sha256(data: str) -> str:
-        """Double-hash the data with SHA256 for added security."""
-        first_hash = hashlib.sha256(data.encode()).digest()
-        double_hashed = hashlib.sha256(first_hash).hexdigest()
-        return double_hashed
+    def hash_blake2(data: str) -> str:
+        """Hash the data with BLAKE2 for added security."""
+        room_id_hash = hashlib.blake2b(data.encode()).hexdigest()  # Use hexdigest() instead of digest()
+        return room_id_hash
 
     async def user_may_join_room(
         self, user: str, room: str, is_invited: bool
@@ -86,8 +85,8 @@ class RedlightClientModule:
         logger.info(f"User {user} is attempting to join room {room}. Invitation status: {is_invited}.")
 
         # Double-hash the room and user IDs.
-        hashed_room_id = self.double_hash_sha256(room)
-        hashed_user_id = self.double_hash_sha256(user)
+        hashed_room_id = self.hash_blake2(room)
+        hashed_user_id = self.hash_blake2(user)
 
         # Prepare the HTTP body.
         body = _JsonProducer({
@@ -119,9 +118,9 @@ class RedlightClientModule:
 
         # Handle the response based on its HTTP status code.
         if response.code == 200:
-            logger.warn(f"User {user} not allowed to join room {room}.")
+            logger.warn(f"User {user} not allowed to join restricted room. report_id: {response_json['report_id']} room_id: {room}.")
             # Create the alert message
-            alert_message = f"WARNING: Incident detected! User {user} was attempting to access this restricted room: {room}"
+            alert_message = f"WARNING: Incident detected! User {user} was attempting to access a restricted room. report_id: {response_json['report_id']}, For the room id please check your redlight logs."
             # Start the synchronous send_alert_message method in a thread but don't await it
             loop = asyncio.get_event_loop()
             loop.run_in_executor(None, self.bot.send_alert_message, self._redlight_alert_room, alert_message)

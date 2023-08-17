@@ -26,13 +26,6 @@ real	0m0.003s
 user	0m0.004s
 sys	0m0.002s
 
-$ time echo -n '!zWTEwEwdqIvmcJpytH:perthchat.org' | sha256sum -b | cut -d ' ' -f1 | xxd -r -p | sha256sum
-962c56a12d861d1921073916db9a1fb47ccc7887d3199690f1de156e57cac709  -
-
-real	0m0.002s
-user	0m0.005s
-sys	0m0.001s
-
 $ sudo apt install rhash
 $ time echo -n '!OEedGOAXDBahPyWMSQ:example.com' | rhash --sha3-512 - 
 1eb131ffdd0384fee5465cb3ef10ac95d9cd20e1de0e1b56475c44df095c20b61602de183f0fc0cec49d7e291d06b5169f0134e45923ab5814c42f57353dbb8b  (stdin)
@@ -41,15 +34,37 @@ real	0m0.002s
 user	0m0.003s
 sys	0m0.000s
 
-$ time echo -n '!OEedGOAXDBahPyWMSQ:example.com' | b2sum | cut -d ' ' -f1 | xargs echo -n | b2sum
-070034bf542d1cb43026b9f51aabbb28243a67cc0a26a23aa2221ff3f185f0a643bb693d39a3525b68d142b4698f3ba755e0eb90c992580376d867aa1ed5d23e  -
+ time echo -n '!kfGzEsVtwINSAPopXA:perthchat.org' | b2sum
+39d97ad8ce613c2afb900d02318552596a619829847ce6abf1b8cda945c358a8e0d3306d8329481cd008e7f97aac275544b715a7a755c1df76a08a1b4ff665a2  -
 
-real	0m0.003s
-user	0m0.007s
+real	0m0.002s
+user	0m0.003s
 sys	0m0.000s
+
+$ time echo -n '!kfGzEsVtwINSAPopXA:perthchat.org' | b2sum --length=256
+db3ea6a5e44165d3f0d5edaf3ed1c99bee738afcd2a50ddf8a29908719851c65  -
+
+real	0m0.002s
+user	0m0.003s
+sys	0m0.000s
+
+$ time echo -n '!zWTEwEwdqIvmcJpytH:perthchat.org' | sha256sum -b | cut -d ' ' -f1 | xxd -r -p | sha256sum
+962c56a12d861d1921073916db9a1fb47ccc7887d3199690f1de156e57cac709  -
+
+real	0m0.002s
+user	0m0.005s
+sys	0m0.001s
+
+$ time echo -n '!OEedGOAXDBahPyWMSQ:example.com' | argon2 '!OEedGOAXDBahPyWMSQ:example.com' -e
+$argon2i$v=19$m=4096,t=3,p=1$IU9FZWRHT0FYREJhaFB5V01TUTpleGFtcGxlLmNvbQ$eKyknS5nxj85Xcf3HbxGSwIndauticKczRzx03VEL8A
+
+real	0m0.020s
+user	0m0.013s
+sys	0m0.008s
+
 ```
 
 
 ## Final Choice
 
-As sha256sum has shorter output and it supported by Python's built in libraries it seems ideal?
+BLAKE2 since it  has shorter output and it supported by Python's built in libraries it seems ideal?

@@ -50,4 +50,8 @@ Redlight is a community-driven project aimed at protecting the Matrix network's 
 
 ## Roadmap
 
-1) Get a basic prototype working.
+1) Get a basic prototype working. [DONE]
+2) Use Synapses SimpleHttpClient instead of using twisted directly -
+3) Fix the hashing scheme and make it smarter -
+4) Get a database on the redlight server -
+5)
