@@ -74,8 +74,8 @@ class RedlightClientModule:
 
     @staticmethod
     def hash_blake2(data: str) -> str:
-        """Hash the data with BLAKE2 for added security."""
-        room_id_hash = hashlib.blake2b(data.encode()).hexdigest()  # Use hexdigest() instead of digest()
+        """Hash the data with BLAKE2 for upstream comparison."""
+        room_id_hash = hashlib.blake2b(data.encode(), digest_size=32).hexdigest()  # Use hexdigest() instead of digest()
         return room_id_hash
 
     async def user_may_join_room(
