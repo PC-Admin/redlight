@@ -6,6 +6,8 @@
 
 _"The red light means STOP!"_
 
+_CAUTION: This software is alpha quality and shouldn't be used by anybody._
+
 An advanced abuse mitigation tool. It's a Synapse module that allows server owners to either run a "redlight server", or to act as a "redlight client" to prevent their own users from accessing abusive rooms. It's designed to block child sexual abuse material (CSAM) and other abusive content on the Matrix network. 
 
 This software attempts to resolve the complex problem of how to share pointers to rooms containing abusive content in order to block or report activity. These room lists are sensitive and sharing them can not only aid people in blocking this content but also direct bad actors to said content.
@@ -51,7 +53,6 @@ Redlight is a community-driven project aimed at protecting the Matrix network's 
 ## Roadmap
 
 1) Get a basic prototype working. [DONE]
-2) Use Synapses SimpleHttpClient instead of using twisted directly -
+2) Use Synapses SimpleHttpClient instead of importing/using twisted directly -
 3) Fix the hashing scheme and make it smarter -
 4) Get a database on the redlight server -
-5)
