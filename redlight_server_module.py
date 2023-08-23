@@ -33,7 +33,7 @@ class SourceDataManager:
         self._source_repo_url = config.get("redlight_source_repo_url", "")
         self._git_token = config.get("redlight_git_token", "")
         self._source_list_file_path = config.get("redlight_source_list_file_path", "dist/summaries.json")
-        self._filtered_tags = config.get("filtered_tags", [])
+        self._filtered_tags = config.get("redlight_filtered_tags", [])
         self._source_dict = {}
         self._source_dict_last_update = None
         self.update_data()
