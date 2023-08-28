@@ -4,9 +4,7 @@
   <img src="https://code.glowers.club/PC-Admin/redlight/raw/branch/main/logo/redlight_logo.jpg" width="480" alt="redlight logo">
 </p>
 
-_"The red light means STOP!"_
-
-_CAUTION: This software is alpha quality and shouldn't be used by anybody._
+_CAUTION: This software is a prototype and is not ready for production use._
 
 An advanced abuse mitigation tool. It's a Synapse module that allows server owners to either run a "redlight server", or to act as a "redlight client" to prevent their own users from accessing abusive rooms. It's designed to block child sexual abuse material (CSAM) and other abusive content on the Matrix network. 
 
@@ -42,7 +40,7 @@ This project is licensed under the MIT License.
 
 ## Contributing
 
-We warmly welcome contributors who are interested in improving Matrix Lantern. Whether you're fixing bugs, improving documentation, or proposing new features, your efforts are greatly appreciated. Please ensure that new contributions follow our [Style Guide](./style_guide.md).
+We warmly welcome contributors who are interested in improving Redlight. Whether you're fixing bugs, improving documentation, or proposing new features, your efforts are greatly appreciated. Please ensure that new contributions follow our [Style Guide](./style_guide.md).
 
 
 ## Acknowledgements
